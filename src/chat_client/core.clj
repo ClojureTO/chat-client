@@ -19,6 +19,18 @@
     (socket/write-line c (str "MSG " message))
     (throw (Exception. "no connection available!"))))
 
+;; Example bot
+(defn hello-bot []
+  (connect-user! "hello-bot")
+  (send-message "hi there")
+  (loop [msg (socket/read-lines @conn)]
+    (when (re-matches #".*hello.*" (first msg))
+      (send-message "heeeeelllllloooooo back!"))
+    ;; if you want to kill the function, do this:
+    ;; (reset! chat-client.core/conn nil)
+    (when @conn
+      (recur (socket/read-line @conn)))))
+
 ;(connect-user! "Foo")
 
 ;(send-message "heeeelloooooo")
