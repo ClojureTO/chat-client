@@ -14,13 +14,13 @@ Require the client library in your namespace:
 Create a new socket connection by calling the `create` function.
 This will return a map containing the keys `:socket`, `:reader`, and `:writer`.
 
-```
+```clojure
 (def socket (create "localhost" 1234))
 ```
 
 We can now create a thread for reading messages from the server by passing it the socket map and a handler function that will be responsible for processing the incoming messages.
 
-```
+```clojure
 (def out (atom []))
 
 (defn message-handler [out]
