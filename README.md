@@ -18,13 +18,16 @@ This will return a map containing the keys `:socket`, `:reader`, and `:writer`.
 (def socket (create "localhost" 1234))
 ```
 
-We can now create a thread for reading messages from the server by passing it the socket map and an atom to collect the output.
-The atom should contain a vector where the incoming messages will be appended as they're received from the server.
+We can now create a thread for reading messages from the server by passing it the socket map and a handler function that will be responsible for processing the incoming messages.
 
 ```
 (def out (atom []))
-(start-reader-thread socket out)
+
+(defn message-handler [out]
+  (fn [message]
+    (swap! out conj message)))
 ```
+Above, we create an atom to stored the messages we've received so far and a message handler function that will be used to populate it.
 
 We can send messages to the socket using the `send-message` function and close the socket using the `close` function when we're finished.
 
