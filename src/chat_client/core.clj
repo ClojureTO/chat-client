@@ -1,31 +1,43 @@
 (ns chat-client.core
-  (:require [clj-sockets.core :as socket]))
+  (:require [clojure.java.io :as io])
+  (:import java.io.IOException
+           [java.net Socket SocketException]))
 
-(def conn (atom nil))
+(defn create [hostname port]
+  (let [socket (Socket. hostname port)
+        rdr    (io/reader socket)
+        wrt    (io/writer socket)]
+    {:socket socket
+     :reader rdr
+     :writer wrt}))
 
-(defn close-connetion! [conn]
-  (when-let [c @conn]
-    (socket/close-socket c)
-    (reset! conn nil)))
+(defn close [{:keys [socket]}]
+  (when (and socket (not (.isClosed socket)))
+    (.close socket)))
 
-(defn connect-user! [id]
-  (close-connetion! conn)
-  (reset! conn (socket/create-socket "localhost" 1234))
-  (socket/write-line @conn (str "USER " id)))
+(defn send-message [{:keys [writer]} message]
+  (.write writer (str message "\n"))
+  (.flush writer))
 
-(defn send-message [message]
-  (if-let [c @conn]
-    (socket/write-line c (str "MSG " message))
-    (throw (Exception. "no connection available!"))))
+(defn read-message [rdr]
+  (try (.readLine rdr) (catch IOException _)))
 
-(defn list-clients []
-  (if-let [c @conn]
-    (do
-      (socket/write-line c "LIST")
-      (println (socket/read-line c)))
-    (throw (Exception. "no connection available!"))))
+(defn reader-loop [rdr out]
+  (when-let [line (read-message rdr)]    
+    (swap! out conj line)
+    (recur rdr out)))
 
-;(connect-user! "Foo")
-;(send-message "heeeelloooooo")
-;(list-clients)
-;(close-connetion!)
+(defn start-reader-thread [{:keys [reader]} out]
+  (.start (Thread. #(reader-loop reader out))))
+
+;;example usage
+;(def socket (create "localhost" 1234))
+;(def out (atom []))
+
+;(start-reader-thread socket out)
+;(send-message socket "USER Bob")
+;(send-message socket "MSG Hi")
+;(send-message socket "LIST")
+;(send-message socket "MSG Bye")  
+;(close socket)
+;(println @out)
