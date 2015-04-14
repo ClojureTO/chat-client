@@ -22,22 +22,10 @@
 (defn read-message [rdr]
   (try (.readLine rdr) (catch IOException _)))
 
-(defn reader-loop [rdr out]
+(defn reader-loop [rdr handler]
   (when-let [line (read-message rdr)]    
-    (swap! out conj line)
-    (recur rdr out)))
+    (handler line)
+    (recur rdr handler)))
 
-(defn start-reader-thread [{:keys [reader]} out]
-  (.start (Thread. #(reader-loop reader out))))
-
-;;example usage
-;(def socket (create "localhost" 1234))
-;(def out (atom []))
-
-;(start-reader-thread socket out)
-;(send-message socket "USER Bob")
-;(send-message socket "MSG Hi")
-;(send-message socket "LIST")
-;(send-message socket "MSG Bye")  
-;(close socket)
-;(println @out)
+(defn start-reader-thread [{:keys [reader]} handler]
+  (.start (Thread. #(reader-loop reader handler))))
