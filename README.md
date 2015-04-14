@@ -26,8 +26,10 @@ We can now create a thread for reading messages from the server by passing it th
 (defn message-handler [out]
   (fn [message]
     (swap! out conj message)))
+    
+(start-reader-thread socket (message-handler out))    
 ```
-Above, we create an atom to stored the messages we've received so far and a message handler function that will be used to populate it.
+Above, we create an atom to stored the messages we've received so far and a message handler function that will be used to populate it. The function is a closure that returns the handler. We'll initialize it with the `out` atom and pass it to the `start-reader-thread` function.
 
 We can send messages to the socket using the `send-message` function and close the socket using the `close` function when we're finished.
 
